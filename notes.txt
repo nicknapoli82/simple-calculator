@@ -1,0 +1,17 @@
+Everything for simple calculator will be generated with javascript.
+    We will house everything for sanity sake inside a div called main_container
+    Figure out how to generate all the buttons that will live inside main_container
+    Make a special div for the text field which display either:
+    	 The answer
+	 The calculation to be solved
+
+    How to parse through an equation
+
+
+    NOTES:
+	On createElement() - Once this thing is created it is in face a complete object
+	   there is no mystery to unfold. You can manipulate it all you want and just
+	   dump it in an existing element.
+	   Apparently the thing to do is set outerHTML. Setting innerText provided nothing.
+	   The element created need to be appended to its parent before we can do anything
+	   meaningful with that thing, beyond just setting up.
