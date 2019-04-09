@@ -135,12 +135,8 @@ function generate_result(parsed, eq_extracted) {
 	equation = expression_check_format(tokenize(text_field.innerText));
     }
     else equation = eq_extracted;
-    
-    let op_lh_rh = { op: 0, lh: 0, rh: 0 };
-    let prescedence = 3;
-    let equation_index = 0;
 
-//    console.log("Before junk", equation);
+    console.log(equation);
     
     // Blast through the equation and look for brackets
     // Must destroy all brackets
@@ -161,13 +157,11 @@ function generate_result(parsed, eq_extracted) {
 		}
     	    }
 	    let reduction = generate_result(true, equation.slice(l_paren + 1, r_paren));
-	    equation.splice(l_paren, r_paren + 1 - l_paren, reduction[0]);
-//	    console.log(equation);
-//	    alert();
+	    equation.splice(l_paren, r_paren + 1 - l_paren, reduction);
+	    e -= r_paren + 1 - l_paren;
     	}
     }
-//    console.log("after brackets", equation);
-//    alert();
+    
     // Presuming we got here, there should not be any paren left
     let TOKEN_index_check = 2;
     while (equation.length > 1) {
@@ -176,18 +170,14 @@ function generate_result(parsed, eq_extracted) {
 		let result = perform_operation(TOKENS[TOKEN_index_check], equation[iter - 1], equation[iter + 1]);
 		equation.splice(iter - 1, 3, result);
 		iter -= 3;
-//		console.log(equation);
-//		alert();		
 	    }
 	}
 
 	TOKEN_index_check++;
-	console.log(equation);
-	alert();			
     }
 
     // If we get here then the equation is solved??? Maybe, so update the text
-    return equation;
+    return Number(equation);
 }
 
 // tokenize takes raw text and returns an array of numbers and tokens
@@ -273,7 +263,7 @@ function expression_check_format(equation) {
 }
 
 function perform_operation(token, lh, rh) {
-    console.log("Passed", token, lh, rh);
+    console.log("Operation Passed", token, lh, rh);
     switch (token) {
     case TIMES:
 	return lh * rh;
