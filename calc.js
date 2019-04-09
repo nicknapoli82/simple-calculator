@@ -102,6 +102,7 @@ function create_buttons_field() {
 
 function modify_text_field(value) {
     if (text_field.innerText === '0') {
+	if (value === '=') return;
 	text_field.innerText = '';
 	text_field.innerText += value;
     }
@@ -109,7 +110,16 @@ function modify_text_field(value) {
 	text_field.innerText = '0';
     }
     else if (value === '=') {
-	generate_result();
+	text_field.innerText = generate_result();
+    }
+    else if (value === ')') {
+	// Check balanced parens
+	let r_paren = 0;
+	for (let i = text_field.innerText.length - 1; i >= 0; i--) {
+	    if (text_field.innerText[i] === ')') r_paren++;
+	    else if (text_field.innerText[i] === '(') r_paren--;
+	}
+	if (r_paren < 0) text_field.innerText += ')';
     }
     else text_field.innerText += value;
 }
@@ -119,35 +129,69 @@ create_buttons_field();
 
 // Now for what I think is the scary part. Figuring out how to generate a result
 // based on some type of input
-function generate_result() {
-    let equation = tokenize(text_field.innerText);
+function generate_result(parsed, eq_extracted) {
+    let equation;
+    if (!parsed) {
+	equation = expression_check_format(tokenize(text_field.innerText));
+    }
+    else equation = eq_extracted;
+    
     let op_lh_rh = { op: 0, lh: 0, rh: 0 };
-    let prescidence = 3;
+    let prescedence = 3;
     let equation_index = 0;
 
+//    console.log("Before junk", equation);
+    
+    // Blast through the equation and look for brackets
+    // Must destroy all brackets
+    // This is recursive
+    for (let e = 0; e < equation.length; e++) {
+    	if (equation[e] === '(') {
+    	    let l_paren = e;
+    	    let r_paren = e;
+	    let left = 1;
+    	    // Make sure we are extracting a slice from the outermost brackets
+    	    while (left) {
+		r_paren++;
+		if (equation[r_paren] === '(') {
+		    left++;
+		}
+		else if (equation[r_paren] === ')') {
+		    left--;
+		}
+    	    }
+	    let reduction = generate_result(true, equation.slice(l_paren + 1, r_paren));
+	    equation.splice(l_paren, r_paren + 1 - l_paren, reduction[0]);
+//	    console.log(equation);
+//	    alert();
+    	}
+    }
+//    console.log("after brackets", equation);
+//    alert();
+    // Presuming we got here, there should not be any paren left
+    let TOKEN_index_check = 2;
+    while (equation.length > 1) {
+	for(let iter = 0; iter < equation.length; iter++) {
+	    if (equation[iter] === TOKENS[TOKEN_index_check]) {
+		let result = perform_operation(TOKENS[TOKEN_index_check], equation[iter - 1], equation[iter + 1]);
+		equation.splice(iter - 1, 3, result);
+		iter -= 3;
+//		console.log(equation);
+//		alert();		
+	    }
+	}
 
-    // Probably should refactor this into a recursive function
-    // Want to think a bit
-    // Play with child :)
-    // while (equation.length > 1) {
-    // 	// Consume array bits by operator prescidence
-    // 	if (prescidence === 3 && !Number(equation[equation_index])) {
-	    
-    // 	}
-    // 	else equation_index++;
-    // 	if (prescidence === 2 && !Number(equation[equation_index])) {
-	    
-    // 	}
-    // 	else equation_index++;
-    // 	if (prescidence === 1 && !Number(equation[equation_index])) {
-	    
-    // 	}
-    // 	else equation_index++;
-    // }
+	TOKEN_index_check++;
+	console.log(equation);
+	alert();			
+    }
+
+    // If we get here then the equation is solved??? Maybe, so update the text
+    return equation;
 }
 
 // tokenize takes raw text and returns an array of numbers and tokens
-const TOKENS = ['(', ')', '%', DIVIDE, TIMES, '+', '-'];
+const TOKENS = ['(', ')', TIMES, DIVIDE, '%', '+', '-'];
 
 function tokenize(equation) {
     let result = [];
@@ -168,4 +212,79 @@ function tokenize(equation) {
     }
 
     return result;
+}
+
+// Ensures balanced parens and will insert '*' based on implicit multiply
+function expression_check_format(equation) {
+    let result = [];
+    // Balance parens
+    for (let e = 0; e < equation.length; e++) {
+	if (equation[e] === '(') {
+	    let l_paren = 1;
+	    let temp_itterator = e + 1;
+
+	    while (l_paren && temp_itterator < equation.length) {
+		if (equation[temp_itterator] === '(') {
+		    l_paren++;
+		}
+		else if (equation[temp_itterator] === ')') {
+		    l_paren--;
+		}
+		temp_itterator++;
+	    }
+	    // If there are more left paren than right, balance the expression
+	    while (l_paren) {
+		equation.push(')');
+		l_paren--;
+	    }
+	}
+    }
+
+    // Format implicit multiply and negation
+    let temp_itterator = 0;
+    while (temp_itterator < equation.length) {
+	if (equation[temp_itterator] === '(') {
+	    if (Number(equation[temp_itterator - 1])) {
+		result.push(TIMES);
+		result.push(equation[temp_itterator]);
+	    }
+	    else if (equation[temp_itterator - 1] === ')') {
+		result.push(TIMES);
+		result.push(equation[temp_itterator]);
+	    }
+	    else result.push(equation[temp_itterator]);
+	}
+	else if(equation[temp_itterator] === ')') {
+	    if (Number(equation[temp_itterator + 1]) || equation[temp_itterator +1] === '(') {
+		result.push(equation[temp_itterator]);
+		result.push(TIMES);
+	    }
+	    else result.push(equation[temp_itterator]);
+	}
+	else if(equation[temp_itterator] === '-' && !Number(equation[temp_itterator - 1])) {
+	    equation.splice(temp_itterator, 2, -equation[temp_itterator + 1]);
+	    temp_itterator--;
+	}
+	else result.push(equation[temp_itterator]);
+	temp_itterator++;
+    }
+
+    return result;
+}
+
+function perform_operation(token, lh, rh) {
+    console.log("Passed", token, lh, rh);
+    switch (token) {
+    case TIMES:
+	return lh * rh;
+    case DIVIDE:
+	return lh / rh;
+    case '%':
+	return lh % rh;
+    case '+':
+	return lh + rh;
+    case '-':
+	return lh - rh;
+    }
+    return 'undefined';
 }
