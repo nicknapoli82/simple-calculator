@@ -15,3 +15,15 @@ Everything for simple calculator will be generated with javascript.
 	   Apparently the thing to do is set outerHTML. Setting innerText provided nothing.
 	   The element created need to be appended to its parent before we can do anything
 	   meaningful with that thing, beyond just setting up.
+
+	Working though how to propperly form the equation based on what I need to solve
+	   propper.
+	   Mutate equation based on parens first
+	   	  If a left paren is found
+		     and the item just prior is a number
+		        Add a multiply token just before the paren
+		        I think thats all I need to look for
+		  If a right paren is found
+		     and the item just after is a number or is a left paren
+		        Add a multiply token just after the paren
+			

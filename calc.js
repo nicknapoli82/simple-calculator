@@ -206,7 +206,6 @@ function tokenize(equation) {
 
 // Ensures balanced parens and will insert '*' based on implicit multiply
 function expression_check_format(equation) {
-    let result = [];
     // Balance parens
     for (let e = 0; e < equation.length; e++) {
 	if (equation[e] === '(') {
@@ -230,36 +229,40 @@ function expression_check_format(equation) {
 	}
     }
 
-    // Format implicit multiply and negation
+    console.log("After Paren Balance", equation);
+    
+    // Format implicit multiply 
     let temp_itterator = 0;
     while (temp_itterator < equation.length) {
 	if (equation[temp_itterator] === '(') {
 	    if (Number(equation[temp_itterator - 1])) {
-		result.push(TIMES);
-		result.push(equation[temp_itterator]);
+		equation.splice(temp_itterator, 0, TIMES);
 	    }
-	    else if (equation[temp_itterator - 1] === ')') {
-		result.push(TIMES);
-		result.push(equation[temp_itterator]);
-	    }
-	    else result.push(equation[temp_itterator]);
 	}
 	else if(equation[temp_itterator] === ')') {
-	    if (Number(equation[temp_itterator + 1]) || equation[temp_itterator +1] === '(') {
-		result.push(equation[temp_itterator]);
-		result.push(TIMES);
+	    if (Number(equation[temp_itterator + 1]) || equation[temp_itterator + 1] === '(') {
+		equation.splice(temp_itterator + 1, 0, TIMES);
 	    }
-	    else result.push(equation[temp_itterator]);
 	}
-	else if(equation[temp_itterator] === '-' && !Number(equation[temp_itterator - 1])) {
-	    equation.splice(temp_itterator, 2, -equation[temp_itterator + 1]);
-	    temp_itterator--;
-	}
-	else result.push(equation[temp_itterator]);
 	temp_itterator++;
     }
 
-    return result;
+    // Format negation as needed
+    temp_itterator = 0;
+    while (temp_itterator < equation.length) {
+	if(equation[temp_itterator] === '-') {
+	    if (equation[temp_itterator + 1] === '(' && !Number(equation[temp_itterator - 1])) {
+		equation.splice(temp_itterator, 1, -1, TIMES);		
+	    }
+	    else if (!Number(equation[temp_itterator - 1]) && equation[temp_itterator - 1] != ')' && Number(equation[temp_itterator + 1])) {
+		equation.splice(temp_itterator, 2, -equation[temp_itterator + 1]);
+	    }
+	}
+	temp_itterator++;
+    }
+    console.log("Equation Result!", equation);
+
+    return equation;
 }
 
 function perform_operation(token, lh, rh) {
