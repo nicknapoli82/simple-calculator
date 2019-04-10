@@ -103,7 +103,7 @@ function create_buttons_field() {
 function modify_text_field(value) {
     let ac_ce = document.getElementById('clear_textAC');
 
-    // For valid input checking '-' is going to be a special case
+    // For valid input checking
     let valid_input = [ '(', ')', TIMES, DIVIDE, '%', '+', '-' ];
 
     if (text_field.innerText === '0') {
@@ -124,8 +124,21 @@ function modify_text_field(value) {
     }
     else {
 	// Basically if last input was an operateror and this input is also an operator... Don't do it.
-	if (value != '-' &&  value != '(' && valid_input.indexOf(value) >= 0 && valid_input.indexOf(text_field.innerText[text_field.innerText.length -1]) >= 0) {
+	// Special cases exist.
+	if (value != '-' &&  value != '(' && value != ')' &&
+	    valid_input.indexOf(value) >= 0 &&
+	    valid_input.indexOf(text_field.innerText[text_field.innerText.length -1]) >= 0) {
 	    return;
+	}
+	else if (value === ')') {
+	    // Check balanced parens
+	    let r_paren = 0;
+	    for (let i = text_field.innerText.length - 1; i >= 0; i--) {
+		if (text_field.innerText[i] === ')') r_paren++;
+		else if (text_field.innerText[i] === '(') r_paren--;
+	    }
+	    console.log(r_paren);
+	    if (r_paren < 0) text_field.innerText += ')';	    
 	}
 	else if (value === '-' && text_field.innerText[text_field.innerText.length - 1] === '-') {
 	    return;
