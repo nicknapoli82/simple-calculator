@@ -4,7 +4,7 @@ const COLUMBS = 4;
 const ROWS = 5;
 const DIVIDE = '\xF7'; // HEX char code for divide
 const TIMES = '\xD7';  // HEX char code for times
-
+let AC_CE_toggle = false;
 
 let main_container = document.getElementById("main_container");
 
@@ -101,27 +101,48 @@ function create_buttons_field() {
 }
 
 function modify_text_field(value) {
+    let ac_ce = document.getElementById('clear_textAC');
+
+    // For valid input checking '-' is going to be a special case
+    let valid_input = [ '(', ')', TIMES, DIVIDE, '%', '+', '-' ];
+
     if (text_field.innerText === '0') {
 	if (value === '=') return;
+	if (value === 'AC' || value === 'CE') return;
 	text_field.innerText = '';
 	text_field.innerText += value;
     }
-    else if (value === 'AC') {
-	text_field.innerText = '0';
+    else if (value === 'AC' || value === 'CE') {
+	if (AC_CE_toggle) {
+	    if (text_field.innerText != '0') {
+		text_field.innerText = text_field.innerText.slice(0, text_field.innerText.length - 1);
+	    }
+	}
     }
     else if (value === '=') {
 	text_field.innerText = generate_result();
     }
-    else if (value === ')') {
-	// Check balanced parens
-	let r_paren = 0;
-	for (let i = text_field.innerText.length - 1; i >= 0; i--) {
-	    if (text_field.innerText[i] === ')') r_paren++;
-	    else if (text_field.innerText[i] === '(') r_paren--;
+    else {
+	// Basically if last input was an operateror and this input is also an operator... Don't do it.
+	if (value != '-' &&  value != '(' && valid_input.indexOf(value) >= 0 && valid_input.indexOf(text_field.innerText[text_field.innerText.length -1]) >= 0) {
+	    return;
 	}
-	if (r_paren < 0) text_field.innerText += ')';
+	else if (value === '-' && text_field.innerText[text_field.innerText.length - 1] === '-') {
+	    return;
+	}
+	else text_field.innerText += value;
     }
-    else text_field.innerText += value;
+
+    // Do the toggle thing for AC button, because Google did it :)
+    if (text_field.innerText.length === 0) {
+	text_field.innerText = '0';
+	ac_ce.setAttribute('value', 'AC');
+	AC_CE_toggle = false;
+    }
+    else {
+	ac_ce.setAttribute('value', 'CE');
+	AC_CE_toggle = true;
+    }
 }
 
 create_buttons_field();
