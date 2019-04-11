@@ -107,6 +107,7 @@ function modify_text_field(value) {
     let valid_input = [ '(', ')', TIMES, DIVIDE, '%', '+', '-' ];
 
     if (text_field.innerText === '0') {
+	if (valid_input.slice(1, valid_input.length - 1).indexOf(value) >= 0) return;
 	if (value === '=') return;
 	if (value === 'AC' || value === 'CE') return;
 	text_field.innerText = '';
@@ -197,17 +198,26 @@ function generate_result(parsed, eq_extracted) {
     }
     
     // Presuming we got here, there should not be any paren left
-    let TOKEN_index_check = 2;
+    let precedence_index_check = 0;
+    let precedence_table = [TOKENS.slice(2, 5), TOKENS.slice(5, TOKENS.length)];
     while (equation.length > 1) {
 	for(let iter = 0; iter < equation.length; iter++) {
-	    if (equation[iter] === TOKENS[TOKEN_index_check]) {
-		let result = perform_operation(TOKENS[TOKEN_index_check], equation[iter - 1], equation[iter + 1]);
+	    let operator = precedence_table[precedence_index_check];
+	    operator = operator.indexOf(equation[iter]);
+	    if (operator >= 0) {
+		operator = precedence_table[precedence_index_check][operator];
+		let result = perform_operation(operator, equation[iter - 1], equation[iter + 1]);
 		equation.splice(iter - 1, 3, result);
-		iter -= 3;
+		iter -= 2;
 	    }
 	}
 
-	TOKEN_index_check++;
+	precedence_index_check++;
+	// Catch all just in case I messed up the above.
+	if (precedence_index_check > 100) {
+	    console.log("NOTE:[NICK] You messed up... dummmmmmy");
+	    break;
+	}
     }
 
     // If we get here then the equation is solved??? Maybe, so update the text
